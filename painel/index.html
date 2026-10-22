@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prospecta</title>
+<style>
+:root{
+  --bg:#f4f5f2; --surface:#ffffff; --surface-2:#fafbf9; --ink:#141a16; --ink-2:#3a443e; --muted:#6b766f; --line:#e4e8e3; --line-2:#eef1ed;
+  --side:#0e1712; --side-2:#16231b; --side-ink:#aebbb3; --side-ink-hi:#ffffff; --side-line:#1f2e25;
+  --accent:#0d7a4c; --accent-hi:#0a6a41; --accent-ink:#ffffff; --accent-soft:#e2f2e9; --accent-line:#bfe3cf;
+  --wa:#1ea952; --gold:#d99a00; --warn:#a86400; --warn-soft:#fff3df; --err:#c0392b; --err-soft:#fdecea;
+  --blue:#2563c9; --blue-soft:#e6eefb; --violet:#7c4dcc; --violet-soft:#f0e9fb;
+  --sh-1:0 1px 2px rgba(16,24,20,.04),0 1px 1px rgba(16,24,20,.03);
+  --sh-2:0 12px 40px rgba(16,24,20,.14),0 2px 6px rgba(16,24,20,.06);
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0c100e; --surface:#141a17; --surface-2:#111613; --ink:#e8ede9; --ink-2:#c2cbc5; --muted:#8c9891; --line:#232c27; --line-2:#1c2420;
+  --side:#080b09; --side-2:#121915; --side-ink:#8d9a92; --side-line:#18211c;
+  --accent:#34b679; --accent-hi:#43c487; --accent-ink:#04120a; --accent-soft:#14291d; --accent-line:#21503a;
+  --wa:#36c56d; --gold:#f0bd2e; --warn:#f0a83a; --warn-soft:#2b2212; --err:#ff7b6b; --err-soft:#311a17;
+  --blue:#6b9cf0; --blue-soft:#17233a; --violet:#a98bf0; --violet-soft:#221a33;
+  --sh-1:none; --sh-2:0 12px 40px rgba(0,0,0,.5);
+}}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.num{font-variant-numeric:tabular-nums}
+
+/* ── Layout ── */
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.side{background:var(--side);color:var(--side-ink);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 12px;border-right:1px solid var(--side-line);z-index:40}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 10px 22px;color:var(--side-ink-hi)}
+.logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#1fb36f,#0a6a41);display:grid;place-items:center;box-shadow:0 4px 14px rgba(31,179,111,.35)}
+.logo svg{width:18px;height:18px;stroke:#fff}
+.brand b{font-size:16px;letter-spacing:-.01em}
+.brand small{display:block;font-size:11px;color:var(--side-ink);margin-top:-2px}
+.nav-sec{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:#5f6e66;padding:14px 12px 6px}
+.nav a{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;color:var(--side-ink);font-weight:500;font-size:13.5px;text-decoration:none;margin-bottom:2px;position:relative}
+.nav a:hover{background:var(--side-2);color:var(--side-ink-hi)}
+.nav a.on{background:var(--side-2);color:var(--side-ink-hi)}
+.nav a.on::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:#2fc27e}
+.nav .badge{margin-left:auto;background:#1f3a2b;color:#5fe0a0;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px}
+.nav .badge.pulse{animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.45}}
+.side-foot{margin-top:auto;padding:12px;border-radius:10px;background:var(--side-2);font-size:12.5px}
+.side-foot .row{display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:#5f6e66;flex:none}
+.dot.ok{background:#2fc27e;box-shadow:0 0 0 3px rgba(47,194,126,.18)} .dot.off{background:#ff6b5b;box-shadow:0 0 0 3px rgba(255,107,91,.18)}
+.side-foot small{display:block;color:#5f6e66;margin-top:4px;line-height:1.35}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{height:60px;display:flex;align-items:center;gap:14px;padding:0 28px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(8px);position:sticky;top:0;z-index:30}
+.crumbs{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.crumbs b{color:var(--ink);font-weight:600}
+.crumbs a{color:var(--muted)}
+.topbar .sp{flex:1}
+.gsearch{position:relative;width:min(320px,40vw)}
+.gsearch input{width:100%;padding:8px 12px 8px 34px;border:1px solid var(--line);border-radius:9px;background:var(--surface);outline:none}
+.gsearch input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.gsearch svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted)}
+.hamb{display:none;background:none;border:0;padding:6px;cursor:pointer;color:var(--ink)}
+.page{padding:26px 28px 60px;max-width:1500px;width:100%;margin:0 auto}
+.ph{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+.ph h1{font-size:24px;letter-spacing:-.02em;margin:0;font-weight:700}
+.ph p{margin:4px 0 0;color:var(--muted)}
+.ph .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;left:0;top:0;width:260px;transform:translateX(-100%);transition:transform .2s}
+  .side.open{transform:none;box-shadow:var(--sh-2)}
+  .hamb{display:block}
+  .topbar{padding:0 16px}.page{padding:18px 16px 50px}
+  .gsearch{display:none}
+}
+
+/* ── Componentes ── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-1)}
+.card-h{display:flex;align-items:center;gap:10px;padding:16px 18px 0}
+.card-h h3{margin:0;font-size:14px;font-weight:650}
+.card-h .sp{flex:1}
+.card-b{padding:16px 18px 18px}
+.grid{display:grid;gap:16px}
+.g4{grid-template-columns:repeat(4,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:1fr 1fr}
+.g-main{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+@media (max-width:1100px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g-main{grid-template-columns:1fr}}
+@media (max-width:640px){.g2{grid-template-columns:1fr}}
+.kpi{padding:16px 18px;position:relative;overflow:hidden}
+.kpi .l{font-size:12.5px;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:7px}
+.kpi .l svg{width:15px;height:15px}
+.kpi .n{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:6px}
+.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi .ico{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:9px;display:grid;place-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:550;font-size:13.5px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;color:var(--ink);text-decoration:none!important;transition:background .12s,border-color .12s}
+.btn:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+.btn svg{width:16px;height:16px}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{background:var(--accent-hi)}
+.btn.wa{background:var(--wa);border-color:var(--wa);color:#fff}
+.btn.sm{padding:5px 10px;font-size:12.5px;border-radius:7px}
+.btn.lg{padding:12px 20px;font-size:15px}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);background:var(--line-2)}
+.btn.danger:hover{color:var(--err);border-color:var(--err)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.in,select.in,textarea.in{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);outline:none;transition:border-color .12s,box-shadow .12s}
+.in:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+select.in{width:auto;padding-right:28px}
+textarea.in{resize:vertical}
+.lbl{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);margin:16px 0 6px}
+.hint{font-size:12px;color:var(--muted);margin-top:5px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:12.5px;cursor:pointer;user-select:none;color:var(--ink-2)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);font-weight:600}
+.chip svg{width:14px;height:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--line-2);color:var(--muted);white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8}
+.pill.nodot::before{display:none}
+.s-novo{background:var(--line-2);color:var(--muted)}
+.s-contatado{background:var(--blue-soft);color:var(--blue)}
+.s-respondeu{background:var(--warn-soft);color:var(--warn)}
+.s-reuniao{background:var(--violet-soft);color:var(--violet)}
+.s-fechado{background:var(--accent-soft);color:var(--accent)}
+.s-descartado{background:var(--err-soft);color:var(--err)}
+.e-rodando{background:var(--accent-soft);color:var(--accent)} .e-na_fila{background:var(--warn-soft);color:var(--warn)}
+.e-erro{background:var(--err-soft);color:var(--err)} .e-concluida{background:var(--line-2);color:var(--ink-2)} .e-cancelada{background:var(--line-2);color:var(--muted)}
+.bar{height:6px;border-radius:9px;background:var(--line-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:9px;transition:width .4s}
+.bar.ind i{width:30%!important;animation:ind 1.3s infinite ease-in-out}
+@keyframes ind{0%{margin-left:-30%}100%{margin-left:100%}}
+.empty{padding:48px 20px;text-align:center;color:var(--muted)}
+.empty .ic{width:46px;height:46px;border-radius:12px;background:var(--line-2);display:grid;place-items:center;margin:0 auto 12px;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:4px}
+.muted{color:var(--muted)} .sm{font-size:12.5px} .xs{font-size:11.5px}
+.row{display:flex;align-items:center;gap:8px}
+.sep{height:1px;background:var(--line);margin:14px 0}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;background:var(--line-2);padding:1px 5px;border-radius:5px}
+
+/* tabela */
+.tbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.tbar .in[type=search]{max-width:280px}
+.twrap{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse}
+.t th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap;user-select:none}
+.t th[data-o]{cursor:pointer} .t th[data-o]:hover{color:var(--ink)}
+.t td{padding:11px 14px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+.t tbody tr{cursor:pointer;transition:background .1s}
+.t tbody tr:hover td{background:var(--surface-2)}
+.t tbody tr.sel td{background:var(--accent-soft)}
+.t .chk{width:36px;padding-right:0}
+.t input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+.lead-n{font-weight:600;color:var(--ink);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lead-c{font-size:12px;color:var(--muted)}
+.ok-ico{display:inline-flex;gap:4px}
+.ok-ico span{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--line-2);color:var(--muted);opacity:.35}
+.ok-ico span.on{opacity:1}
+.ok-ico span svg{width:13px;height:13px}
+.ok-ico span.wa.on{background:color-mix(in srgb,var(--wa) 15%,transparent);color:var(--wa)}
+.ok-ico span.em.on{background:var(--blue-soft);color:var(--blue)}
+.ok-ico span.ws.on{background:var(--violet-soft);color:var(--violet)}
+.ok-ico span.ig.on{background:#fde7f1;color:#c13584}
+@media (prefers-color-scheme:dark){.ok-ico span.ig.on{background:#3a1626;color:#ef6fae}}
+.stars{color:var(--gold);font-weight:700}
+.pag{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;color:var(--muted);font-size:12.5px;flex-wrap:wrap}
+.bulk{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--accent-soft);border-bottom:1px solid var(--accent-line);font-size:13px;font-weight:600;color:var(--accent);flex-wrap:wrap}
+
+/* drawer */
+.ov{position:fixed;inset:0;background:rgba(8,12,10,.38);z-index:60;opacity:0;pointer-events:none;transition:opacity .18s}
+.ov.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100vw);background:var(--surface);z-index:70;box-shadow:var(--sh-2);transform:translateX(100%);transition:transform .22s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.dr-h{padding:20px 22px 16px;border-bottom:1px solid var(--line)}
+.dr-h h2{margin:0;font-size:19px;letter-spacing:-.01em;line-height:1.25;padding-right:30px}
+.dr-b{flex:1;overflow:auto;padding:18px 22px 30px}
+.dr-x{position:absolute;right:14px;top:14px}
+.acts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.acts-grid .btn{justify-content:center}
+.info{display:grid;grid-template-columns:110px 1fr;gap:9px 12px;font-size:13.5px;margin:0}
+.info dt{color:var(--muted)}
+.info dd{margin:0;word-break:break-word}
+.stsel{display:flex;flex-wrap:wrap;gap:6px}
+.stsel button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:12.5px;cursor:pointer;font-weight:550;color:var(--ink-2)}
+.stsel button.on{border-color:transparent}
+.tl{position:relative;margin-top:10px}
+.tl-i{display:grid;grid-template-columns:22px 1fr;gap:10px;padding-bottom:14px;position:relative}
+.tl-i::before{content:"";position:absolute;left:10.5px;top:22px;bottom:0;width:1px;background:var(--line)}
+.tl-i:last-child::before{display:none}
+.tl-d{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--line-2);color:var(--muted)}
+.tl-d svg{width:12px;height:12px}
+.tl-t{font-size:13px;white-space:pre-wrap}
+.tl-m{font-size:11.5px;color:var(--muted)}
+.sec-t{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:650;margin:22px 0 10px}
+
+/* kanban */
+.kb{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(250px,1fr);gap:14px;overflow-x:auto;padding-bottom:10px;align-items:start}
+.kcol{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;max-height:calc(100vh - 210px)}
+.kcol-h{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);font-weight:650;font-size:13px}
+.kcol-h .c{margin-left:auto;color:var(--muted);font-weight:600;font-size:12px}
+.kcol-b{padding:10px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:80px}
+.kcol.drop{border-color:var(--accent);background:var(--accent-soft)}
+.kc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:grab;box-shadow:var(--sh-1)}
+.kc:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.kc.drag{opacity:.4}
+.kc .n{font-weight:600;font-size:13px;line-height:1.3}
+.kc .m{font-size:11.5px;color:var(--muted);margin-top:3px}
+.kc .f{display:flex;align-items:center;gap:6px;margin-top:8px}
+.kmore{text-align:center;font-size:12px;color:var(--muted);padding:6px}
+
+/* funil */
+.fun{display:flex;flex-direction:column;gap:10px}
+.fun-r{display:grid;grid-template-columns:130px 1fr 64px;gap:12px;align-items:center;font-size:13px}
+.fun-b{height:28px;border-radius:7px;background:var(--line-2);overflow:hidden}
+.fun-b i{display:block;height:100%;border-radius:7px;min-width:3px}
+.hb{display:flex;flex-direction:column;gap:9px}
+.hb-r{display:grid;grid-template-columns:minmax(0,1fr) 46px;gap:10px;align-items:center;font-size:13px}
+.hb-r .lab{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px}
+.hb-r .lab span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* busca */
+.ac{position:relative}
+.ac-list{position:absolute;z-index:20;left:0;right:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh-2);max-height:280px;overflow:auto;display:none;padding:4px}
+.ac-list div{padding:8px 10px;cursor:pointer;display:flex;justify-content:space-between;border-radius:7px}
+.ac-list div:hover,.ac-list div.sel{background:var(--accent-soft)}
+.ac-list span{color:var(--muted);font-size:12px}
+.tams{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:900px){.tams{grid-template-columns:1fr 1fr}}
+.tam{border:1.5px solid var(--line);border-radius:11px;padding:12px 13px;cursor:pointer;background:var(--surface);transition:border-color .12s}
+.tam:hover{border-color:var(--accent-line)}
+.tam b{display:block;font-size:13.5px}
+.tam .q{font-size:20px;font-weight:700;margin:4px 0 0;letter-spacing:-.01em}
+.tam small{color:var(--muted);font-size:12px}
+.tam.on{border-color:var(--accent);background:var(--accent-soft)}
+.switch{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px}
+.switch input{appearance:none;width:36px;height:20px;border-radius:999px;background:var(--line);position:relative;cursor:pointer;transition:background .15s;flex:none;margin:0}
+.switch input::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{left:18px}
+.steps{counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.step{display:grid;grid-template-columns:28px 1fr;gap:12px;font-size:13px}
+.step::before{counter-increment:s;content:counter(s);width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;display:grid;place-items:center;font-size:12.5px}
+.step b{display:block;font-size:13.5px}
+.note{font-size:12.5px;padding:10px 12px;border-radius:9px;background:var(--warn-soft);color:var(--warn);display:flex;gap:8px;align-items:flex-start}
+.note svg{width:16px;height:16px;margin-top:1px}
+.note.info{background:var(--blue-soft);color:var(--blue)}
+.note.ok{background:var(--accent-soft);color:var(--accent)}
+.note.err{background:var(--err-soft);color:var(--err)}
+
+/* mensagens */
+.tpl-list .it{padding:12px 14px;border-bottom:1px solid var(--line-2);cursor:pointer}
+.tpl-list .it:hover{background:var(--surface-2)}
+.tpl-list .it.on{background:var(--accent-soft)}
+.tpl-list .it b{font-size:13.5px}
+.tpl-list .it p{margin:3px 0 0;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wa-prev{background:#e5ddd5;border-radius:12px;padding:18px;min-height:150px}
+@media (prefers-color-scheme:dark){.wa-prev{background:#0b141a}}
+.bubble{background:#d9fdd3;color:#111b21;padding:8px 10px 18px;border-radius:8px 0 8px 8px;max-width:85%;margin-left:auto;white-space:pre-wrap;font-size:14px;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.1)}
+@media (prefers-color-scheme:dark){.bubble{background:#005c4b;color:#e9edef}}
+.bubble small{position:absolute;right:8px;bottom:3px;font-size:10.5px;opacity:.6}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,10px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:9px;font-size:13px;opacity:0;transition:all .2s;pointer-events:none;z-index:100;box-shadow:var(--sh-2)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.fade{animation:fade .18s ease-out}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg></div>
+      <div><b>Prospecta</b><small>leads do Google Maps</small></div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <div class="row"><span class="dot" id="dot"></span><b id="motorTxt" style="color:var(--side-ink-hi);font-weight:600">Verificando motor…</b></div>
+      <small id="motorSub">Roda 100% no seu computador</small>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="hamb" id="hamb" aria-label="Menu"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="crumbs" id="crumbs"></div>
+      <div class="sp"></div>
+      <div class="gsearch"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="gq" type="search" placeholder="Buscar lead pelo nome… (Enter)"></div>
+      <a class="btn pri sm" href="#/nova"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nova busca</a>
+    </header>
+    <div class="page" id="page"></div>
+  </div>
+</div>
+<div class="ov" id="ov"></div>
+<aside class="drawer" id="drawer"></aside>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═════════════ utilidades ═════════════
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const semAc = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const fN = n => Number(n||0).toLocaleString("pt-BR");
+const fPct = (a,b) => b ? Math.round(a/b*100)+"%" : "—";
+const fNota = n => n ? n.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1}) : "—";
+const fData = t => t ? new Date(t*1000).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
+function fRel(t){ if(!t) return ""; const s=Date.now()/1000-t;
+  if(s<60) return "agora"; if(s<3600) return `há ${Math.floor(s/60)} min`; if(s<86400) return `há ${Math.floor(s/3600)} h`;
+  if(s<86400*7) return `há ${Math.floor(s/86400)} dia${s>=172800?"s":""}`; return fData(t).slice(0,8); }
+function fTel(d){ d=String(d||"").replace(/^55/,""); return d.length===11?`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`:d.length===10?`(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`:d; }
+function dominio(u){ try{ return new URL(u.startsWith("http")?u:"http://"+u).hostname.replace(/^www\./,""); }catch{ return u; } }
+const ls = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch{return d} }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} } };
+function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("on"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("on"),2400); }
+async function api(path, opts={}){
+  const r = await fetch(path, {headers:{"Content-Type":"application/json"}, ...opts, body: opts.body?JSON.stringify(opts.body):undefined});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.erro || `Erro ${r.status}`);
+  return j;
+}
+// confirmação sem diálogo nativo: o primeiro clique arma, o segundo (em até 4s) confirma
+function confirma(chave, msg){ const t=Date.now(); if(confirma.k===chave && t-confirma.t<4000){ confirma.k=null; return true; }
+  confirma.k=chave; confirma.t=t; toast(msg+" Clique de novo para confirmar."); return false; }
+
+const I = {
+  home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  hist:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.3a3.5 3.5 0 0 1 0 7.4M21.5 20a6.5 6.5 0 0 0-4-6"/>',
+  kanban:'<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/>',
+  msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-5A8 8 0 1 1 21 12z"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
+  wa:'<path d="M3.5 20.5l1.3-4.4A8.5 8.5 0 1 1 8 19.3z"/><path d="M9 8.5c0 3.5 3 6.5 6.5 6.5l1.2-1.6-2-1-1 .8c-1-.4-2.5-1.9-2.9-2.9l.8-1-1-2z"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  ig:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/>',
+  phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
+  pin:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/>',
+  x:'<path d="M18 6 6 18M6 6l12 12"/>',
+  down:'<path d="M12 4v12m0 0-5-5m5 5 5-5M4 20h16"/>',
+  copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  note:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+  flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+  trend:'<path d="m3 17 6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  check:'<path d="m5 12 5 5L20 7"/>',
+  refresh:'<path d="M20 11a8 8 0 0 0-14.8-4M4 4v4h4M4 13a8 8 0 0 0 14.8 4M20 20v-4h-4"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/>',
+};
+const ic = (n, cls="i") => `<svg class="${cls}" viewBox="0 0 24 24">${I[n]}</svg>`;
+
+const STATUS = [["novo","Novo"],["contatado","Contatado"],["respondeu","Respondeu"],["reuniao","Reunião marcada"],["fechado","Fechou negócio"],["descartado","Descartado"]];
+const NOME_ST = Object.fromEntries(STATUS);
+const COR_ST = {novo:"var(--muted)",contatado:"var(--blue)",respondeu:"var(--warn)",reuniao:"var(--violet)",fechado:"var(--accent)",descartado:"var(--err)"};
+const pillSt = s => `<span class="pill s-${s}">${NOME_ST[s]||s}</span>`;
+const TAM = {rapida:["Rápida","~20","2 min"], padrao:["Padrão","60–120","5–10 min"], completa:["Completa","até 120","10–15 min"], cidade:["Cidade inteira","200–600","30–60 min"]};
+const ESTADO = {na_fila:"Na fila", rodando:"Rodando", concluida:"Concluída", erro:"Erro", cancelada:"Cancelada"};
+
+// ═════════════ estado global ═════════════
+const S = { leads:[], map:{}, buscas:[], config:null, municipios:[] };
+async function carregaLeads(){ try{ S.leads = await api("/api/leads"); S.map = Object.fromEntries(S.leads.map(l=>[l.id,l])); }catch{} }
+async function carregaBuscas(){
+  const antes = Object.fromEntries(S.buscas.map(b=>[b.id,b.estado]));
+  try{ S.buscas = await api("/api/buscas"); }catch{ return false; }
+  return S.buscas.some(b => antes[b.id] && antes[b.id]!==b.estado && b.estado==="concluida");
+}
+function upsertLead(l){ const p = {...l, n_hist:(l.historico||[]).length}; delete p.historico;
+  S.map[l.id] = p; const i = S.leads.findIndex(x=>x.id===l.id); if(i>=0) S.leads[i]=p; else S.leads.push(p); }
+
+// ═════════════ navegação ═════════════
+const NAV = [
+  ["sec","Visão geral"], ["inicio","Início","home"],
+  ["sec","Prospecção"], ["nova","Nova busca","plus"], ["buscas","Buscas","hist"], ["leads","Leads","users"], ["funil","Funil de vendas","kanban"],
+  ["sec","Ajustes"], ["mensagens","Mensagens","msg"], ["config","Configurações","gear"],
+];
+function rota(){ const h = location.hash.replace(/^#\/?/,"") || "inicio"; const [v, ...r] = h.split("/"); return {v, arg:r.join("/")}; }
+function renderNav(){
+  const {v} = rota(), ativas = S.buscas.filter(b=>b.estado==="rodando"||b.estado==="na_fila").length;
+  $("#nav").innerHTML = NAV.map(n => n[0]==="sec" ? `<div class="nav-sec">${n[1]}</div>` :
+    `<a href="#/${n[0]}" class="${v===n[0]?"on":""}">${ic(n[2])}${n[1]}
+      ${n[0]==="buscas"&&ativas?`<span class="badge pulse">${ativas}</span>`:""}
+      ${n[0]==="leads"&&S.leads.length?`<span class="badge" style="background:var(--side-2);color:var(--side-ink)">${fN(S.leads.length)}</span>`:""}</a>`).join("");
+}
+function crumbs(parts){ $("#crumbs").innerHTML = parts.map((p,i)=> i<parts.length-1 ? (p[1]?`<a href="${p[1]}">${esc(p[0])}</a>`:`<span>${esc(p[0])}</span>`)+`<span>/</span>` : `<b>${esc(p[0])}</b>`).join(""); }
+const VIEWS = {};
+function render(){
+  const {v, arg} = rota();
+  $("#side").classList.remove("open");
+  renderNav();
+  (VIEWS[v] || VIEWS.inicio)(arg);
+}
+window.addEventListener("hashchange", () => { render(); window.scrollTo(0,0); });
+$("#hamb").onclick = () => $("#side").classList.toggle("open");
+$("#gq").addEventListener("keydown", e => { if(e.key==="Enter"){ FL.texto = e.target.value; ls.set("fl",FL); if(rota().v==="leads") render(); else location.hash="#/leads"; } });
+
+// ═════════════ INÍCIO ═════════════
+VIEWS.inicio = async () => {
+  crumbs([["Início"]]);
+  const primeira = !$("#ini");
+  if(primeira){
+    const h = new Date().getHours(), saud = h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";
+    $("#page").innerHTML = `<div class="ph fade"><div><h1>${saud}!</h1><p>Seu resumo de prospecção.</p></div>
+      <div class="acts"><a class="btn" href="#/funil">${ic("kanban")}Abrir funil</a><a class="btn pri" href="#/nova">${ic("plus")}Nova busca</a></div></div>
+      <div id="ini"><div class="empty">Carregando…</div></div>`;
+  }
+  let d; try{ d = await api("/api/inicio"); }catch{ return; }
+  if(rota().v!=="inicio" || !$("#ini")) return;
+  const ativas = S.buscas.filter(b=>b.estado==="rodando"||b.estado==="na_fila");
+  const blocoAtivas = ativas.length ? `<div class="card ${primeira?"fade":""}" style="margin-bottom:16px"><div class="card-b">${ativas.map(b=>`
+      <a href="#/buscas/${b.id}" style="color:inherit;text-decoration:none;display:block"><div class="row" style="margin-bottom:8px;flex-wrap:wrap"><span class="pill e-${b.estado}">${ESTADO[b.estado]}</span><b>${esc(b.parametros.nichos.join(", "))}</b><span class="muted sm">· ${esc(localB(b))}</span><span class="muted sm" style="margin-left:auto">${esc(b.etapa)}</span></div>${barraB(b)}</a>`).join('<div class="sep"></div>')}</div></div>` : "";
+  if(!d.total){
+    $("#ini").innerHTML = blocoAtivas + `<div class="card fade"><div class="empty" style="padding:70px 20px"><div class="ic">${ic("spark")}</div><b>Nenhum lead ainda</b>${ativas.length?"Sua primeira busca está rodando. Os leads aparecem aqui quando ela terminar.":"Faça sua primeira busca: escolha um nicho e uma cidade."}${ativas.length?"":`<div style="margin-top:16px"><a class="btn pri lg" href="#/nova">${ic("plus")}Fazer primeira busca</a></div>`}</div></div>`; return;
+  }
+  const st = d.por_status, trab = d.total - st.novo, F = primeira ? "fade" : "";
+  const kpi = (lab, n, sub, icn, cor, bg) => `<div class="card kpi"><div class="ico" style="background:${bg};color:${cor}">${ic(icn)}</div><div class="l">${lab}</div><div class="n num">${n}</div><div class="s">${sub}</div></div>`;
+  const etapas = ["contatado","respondeu","reuniao","fechado"];
+  const acum = s => etapas.slice(etapas.indexOf(s)).reduce((a,k)=>a+st[k],0); // quantos chegaram pelo menos até esta etapa
+  const hb = arr => arr.length ? `<div class="hb">${arr.map(([k,n])=>`<div class="hb-r"><div><div class="lab"><span>${esc(k)}</span></div><div class="bar"><i style="width:${n/arr[0][1]*100}%"></i></div></div><div class="num sm" style="text-align:right">${fN(n)}</div></div>`).join("")}</div>` : `<div class="muted sm">Sem dados.</div>`;
+  const icEv = {whatsapp:"wa",status:"flag",nota:"note",ligacao:"phone",email:"mail"};
+  $("#ini").innerHTML = blocoAtivas + `
+    <div class="grid g4 ${F}">
+      ${kpi("Leads na base", fN(d.total), `+${fN(d.novos_semana)} nesta semana`, "users", "var(--accent)", "var(--accent-soft)")}
+      ${kpi("Com WhatsApp", fN(d.com_whatsapp), `${fPct(d.com_whatsapp,d.total)} da base`, "wa", "var(--wa)", "color-mix(in srgb,var(--wa) 14%,transparent)")}
+      ${kpi("Em negociação", fN(st.contatado+st.respondeu+st.reuniao), `${fN(d.contatos_semana)} contatos nesta semana`, "trend", "var(--blue)", "var(--blue-soft)")}
+      ${kpi("Negócios fechados", fN(st.fechado), `conversão de ${fPct(st.fechado, trab)} dos trabalhados`, "check", "var(--violet)", "var(--violet-soft)")}
+    </div>
+    <div class="grid g-main" style="margin-top:16px">
+      <div class="card ${F}"><div class="card-h"><h3>Funil de vendas</h3><div class="sp"></div><a class="sm" href="#/funil">Ver quadro →</a></div>
+        <div class="card-b"><div class="fun">
+          <div class="fun-r"><span>Leads na base</span><div class="fun-b"><i style="width:100%;background:var(--muted);opacity:.3"></i></div><b class="num" style="text-align:right">${fN(d.total)}</b></div>
+          ${etapas.map(s=>`<div class="fun-r"><span>${NOME_ST[s]}</span><div class="fun-b"><i style="width:${acum(s)/d.total*100}%;background:${COR_ST[s]}"></i></div><div style="text-align:right"><b class="num">${fN(acum(s))}</b><div class="xs muted">${fPct(acum(s),d.total)}</div></div></div>`).join("")}
+        </div>
+        <div class="sep"></div>
+        <div class="row sm" style="flex-wrap:wrap;gap:18px"><span class="muted">Ainda não contatados: <b style="color:var(--ink)">${fN(st.novo)}</b></span><span class="muted">Descartados: <b style="color:var(--ink)">${fN(st.descartado)}</b></span><span class="muted">Sem site: <b style="color:var(--warn)">${fN(d.sem_site)}</b></span><span class="muted">Com e-mail: <b style="color:var(--ink)">${fN(d.com_email)}</b></span></div>
+        </div></div>
+      <div class="card ${F}"><div class="card-h"><h3>Atividade recente</h3></div><div class="card-b">
+        ${d.eventos.length?`<div class="tl">${d.eventos.map(e=>`<div class="tl-i"><div class="tl-d">${ic(icEv[e.tipo]||"note")}</div><div><div class="tl-t"><a href="#" data-lead="${esc(e.lead)}"><b>${esc(e.nome)}</b></a> — ${esc(rotuloEv(e))}</div><div class="tl-m">${fRel(e.t)}</div></div></div>`).join("")}</div>`
+          :`<div class="empty" style="padding:24px 10px"><b>Nada por aqui ainda</b>Quando você chamar alguém no WhatsApp ou mudar um status, aparece aqui.</div>`}
+      </div></div>
+    </div>
+    <div class="grid g3" style="margin-top:16px">
+      <div class="card ${F}"><div class="card-h"><h3>Cidades</h3></div><div class="card-b">${hb(d.cidades)}</div></div>
+      <div class="card ${F}"><div class="card-h"><h3>Bairros</h3></div><div class="card-b">${hb(d.bairros)}</div></div>
+      <div class="card ${F}"><div class="card-h"><h3>Categorias</h3></div><div class="card-b">${hb(d.categorias)}</div></div>
+    </div>`;
+};
+function rotuloEv(e){ return e.tipo==="whatsapp" ? "chamado no WhatsApp" : e.tipo==="ligacao" ? "ligação registrada" : e.tipo==="email" ? "e-mail enviado" : e.tipo==="status" ? e.txt.replace("Status: ","→ ") : e.txt; }
+document.addEventListener("click", e => { const a = e.target.closest("[data-lead]"); if(a){ e.preventDefault(); abreLead(a.dataset.lead); } });
+
+// ═════════════ NOVA BUSCA ═════════════
+const SUGESTOES = ["clínicas odontológicas","clínicas de estética","academias","escritórios de advocacia","escritórios de contabilidade",
+  "imobiliárias","pet shops","salões de beleza","barbearias","restaurantes","oficinas mecânicas","lojas de material de construção",
+  "psicólogos","fisioterapia","autoescolas","escolas de idiomas","farmácias","óticas","clínicas veterinárias","nutricionistas"];
+const NB = { tamanho: ls.get("nb_tam","padrao"), cidade: ls.get("ultimaCidade", null) };
+VIEWS.nova = () => {
+  crumbs([["Prospecção","#/buscas"],["Nova busca"]]);
+  $("#page").innerHTML = `<div class="ph fade"><div><h1>Nova busca</h1><p>Encontre empresas no Google Maps com telefone, WhatsApp, e-mail e redes sociais.</p></div></div>
+  <div class="grid g-main fade">
+    <form class="card" id="fNova" autocomplete="off"><div class="card-b" style="padding:22px 24px 24px">
+      <label class="lbl" style="margin-top:0" for="nichos">O que você procura?</label>
+      <input class="in" id="nichos" placeholder="ex.: clínicas odontológicas, ortodontistas" value="${esc(ls.get("nb_nichos",""))}">
+      <div class="hint">Pode colocar mais de um, separados por vírgula. Escreva do jeito que um cliente buscaria no Google.</div>
+      <div class="chips" id="sug" style="margin-top:10px">${SUGESTOES.map(s=>`<span class="chip" data-s="${esc(s)}">${esc(s)}</span>`).join("")}</div>
+      <div class="grid g2" style="gap:14px">
+        <div><label class="lbl" for="cidade">Cidade</label>
+          <div class="ac"><input class="in" id="cidade" placeholder="Digite a cidade…" value="${NB.cidade?esc(NB.cidade.n+" - "+NB.cidade.uf):""}"><div class="ac-list" id="acList"></div></div></div>
+        <div><label class="lbl" for="bairro">Bairro <span class="muted" style="font-weight:400">(opcional)</span></label>
+          <input class="in" id="bairro" placeholder="ex.: Centro, Moema, Savassi"></div>
+      </div>
+      <label class="lbl">Tamanho da busca</label>
+      <div class="tams" id="tams">${Object.entries(TAM).map(([k,[n,q,t]])=>`<div class="tam ${NB.tamanho===k?"on":""}" data-v="${k}"><b>${n}</b><div class="q num">${q}</div><small>empresas · ${t}</small></div>`).join("")}</div>
+      <div id="tamAviso" style="margin-top:10px"></div>
+      <div class="sep" style="margin:20px 0"></div>
+      <label class="switch"><input type="checkbox" id="redes" checked> Procurar Instagram, Facebook e LinkedIn nos sites das empresas</label>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:22px;flex-wrap:wrap">
+        <button class="btn pri lg" type="submit" id="bGo">${ic("search")}Buscar empresas</button>
+        <span class="muted sm" id="filaInfo"></span>
+      </div>
+    </div></form>
+    <div class="grid" style="align-content:start">
+      <div class="card"><div class="card-h"><h3>Como funciona</h3></div><div class="card-b"><div class="steps">
+        <div class="step"><div><b>Busca no Google Maps</b><span class="muted">Nome, telefone, endereço, nota e avaliações de cada empresa.</span></div></div>
+        <div class="step"><div><b>Visita os sites</b><span class="muted">Procura e-mail, WhatsApp e redes sociais, inclusive nas páginas de contato.</span></div></div>
+        <div class="step"><div><b>Organiza no seu CRM</b><span class="muted">Os leads entram na base sem duplicar. Status e anotações ficam guardados.</span></div></div>
+      </div></div></div>
+      <div class="note info">${ic("spark")}<span>As buscas rodam uma de cada vez, numa fila. Pode enfileirar várias e continuar trabalhando enquanto isso.</span></div>
+    </div>
+  </div>`;
+  const marca = () => { const at = $("#nichos").value.split(",").map(x=>x.trim()); $$("#sug .chip").forEach(c=>c.classList.toggle("on", at.includes(c.dataset.s))); };
+  marca();
+  $("#nichos").oninput = () => { ls.set("nb_nichos", $("#nichos").value); marca(); };
+  $("#sug").onclick = e => { const s=e.target.dataset.s; if(!s) return;
+    const at=$("#nichos").value.split(",").map(x=>x.trim()).filter(Boolean), i=at.indexOf(s); i>=0?at.splice(i,1):at.push(s);
+    $("#nichos").value = at.join(", "); ls.set("nb_nichos",$("#nichos").value); marca(); };
+  const avisoTam = () => $("#tamAviso").innerHTML = NB.tamanho==="cidade" ? `<div class="note">${ic("flag")}<span>Busca grande: divide a cidade em 9 regiões e roda uma por vez. Se você fizer várias assim no mesmo dia, o Google pode bloquear seu IP por algumas horas.</span></div>` : "";
+  avisoTam();
+  $("#tams").onclick = e => { const t=e.target.closest(".tam"); if(!t) return; NB.tamanho=t.dataset.v; ls.set("nb_tam",NB.tamanho); $$(".tam").forEach(x=>x.classList.toggle("on",x===t)); avisoTam(); };
+  const fila = S.buscas.filter(b=>b.estado==="rodando"||b.estado==="na_fila").length;
+  $("#filaInfo").textContent = fila ? `${fila} busca${fila>1?"s":""} na frente na fila` : "";
+  montaAutocomplete();
+  $("#fNova").onsubmit = async e => {
+    e.preventDefault();
+    const c = NB.cidade && $("#cidade").value === `${NB.cidade.n} - ${NB.cidade.uf}` ? NB.cidade : (() => { const m=$("#cidade").value.match(/^\s*(.+?)\s*[-,/]\s*([A-Za-z]{2})\s*$/); return m?{n:m[1],uf:m[2].toUpperCase()}:null; })();
+    if(!$("#nichos").value.trim()) return toast("Diga o que você procura (ex.: academias).");
+    if(!c) return toast("Escolha a cidade na lista.");
+    $("#bGo").disabled = true;
+    try{ const b = await api("/api/buscas",{method:"POST",body:{nichos:$("#nichos").value,cidade:c.n,uf:c.uf,bairro:$("#bairro").value,tamanho:NB.tamanho,redes:$("#redes").checked}});
+      await carregaBuscas(); toast("Busca adicionada à fila"); location.hash = `#/buscas/${b.id}`; }
+    catch(err){ toast(err.message); $("#bGo").disabled=false; }
+  };
+};
+async function montaAutocomplete(){
+  if(!S.municipios.length){ try{ S.municipios = (await api("/api/municipios")).map(m=>({...m,k:semAc(m.n)})); }catch{} }
+  let idx=-1; const inp=$("#cidade"), box=$("#acList"); if(!inp) return;
+  const draw = () => { const q=semAc(inp.value.split(/\s+-\s+|,/)[0].trim()); if(!q){box.style.display="none";return;}
+    const ini=[],meio=[]; for(const m of S.municipios){ if(m.k.startsWith(q)) ini.push(m); else if(m.k.includes(q)) meio.push(m); }
+    const pop=(a,b)=>(b.cap-a.cap)||a.n.length-b.n.length; const res=ini.sort(pop).concat(meio.sort(pop)).slice(0,12); idx=-1;
+    box.innerHTML = res.map((m,i)=>`<div data-i="${i}"><b style="font-weight:550">${esc(m.n)}</b><span>${m.uf} · DDD ${m.ddd}${m.cap?" · capital":""}</span></div>`).join("") || `<div style="cursor:default;color:var(--muted)">Nenhuma cidade encontrada</div>`;
+    box._r=res; box.style.display="block"; };
+  const pick = m => { NB.cidade=m; ls.set("ultimaCidade",m); inp.value=`${m.n} - ${m.uf}`; box.style.display="none"; };
+  inp.oninput = draw;
+  inp.onkeydown = e => { const it=$$("div[data-i]",box);
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){ e.preventDefault(); if(!it.length) return; idx=(idx+(e.key==="ArrowDown"?1:-1)+it.length)%it.length; it.forEach((x,i)=>x.classList.toggle("sel",i===idx)); it[idx].scrollIntoView({block:"nearest"}); }
+    else if(e.key==="Enter"&&box.style.display==="block"&&it.length){ e.preventDefault(); pick(box._r[Math.max(idx,0)]); }
+    else if(e.key==="Escape") box.style.display="none"; };
+  box.onmousedown = e => { const d=e.target.closest("div[data-i]"); if(d) pick(box._r[+d.dataset.i]); };
+}
+document.addEventListener("click", e => { const box=$("#acList"); if(box && !e.target.closest(".ac")) box.style.display="none"; });
+
+// ═════════════ BUSCAS ═════════════
+const localB = b => `${b.parametros.bairro?b.parametros.bairro+", ":""}${b.parametros.cidade} - ${b.parametros.uf}`;
+function barraB(b){
+  if(b.estado!=="rodando") return b.estado==="na_fila" ? `<div class="bar"><i style="width:0"></i></div>` : "";
+  const p=b.progresso; if(p&&p.total){ const v = p.fase==="maps" ? p.atual/p.total*.8 : .8+p.atual/p.total*.2; return `<div class="bar"><i style="width:${Math.round(v*100)}%"></i></div>`; }
+  return `<div class="bar ind"><i></i></div>`;
+}
+VIEWS.buscas = arg => arg ? viewBusca(arg) : viewBuscas();
+function viewBuscas(){
+  crumbs([["Prospecção","#/buscas"],["Buscas"]]);
+  const bs = S.buscas;
+  $("#page").innerHTML = `<div class="ph"><div><h1>Buscas</h1><p>Histórico de todas as buscas, da mais recente para a mais antiga.</p></div><div class="acts"><a class="btn pri" href="#/nova">${ic("plus")}Nova busca</a></div></div>
+  <div class="card">${!bs.length?`<div class="empty" style="padding:60px 20px"><div class="ic">${ic("hist")}</div><b>Nenhuma busca ainda</b>Comece pela primeira.<div style="margin-top:14px"><a class="btn pri" href="#/nova">${ic("plus")}Nova busca</a></div></div>`:
+  `<div class="twrap"><table class="t"><thead><tr><th>Busca</th><th>Local</th><th>Tamanho</th><th>Quando</th><th>Situação</th><th style="text-align:right">Empresas</th><th style="text-align:right">WhatsApp</th><th style="text-align:right">E-mail</th></tr></thead><tbody>
+  ${bs.map(b=>`<tr data-b="${b.id}"><td><div class="lead-n">${esc(b.parametros.nichos.join(", "))}</div>${b.novos!=null&&b.estado==="concluida"?`<div class="lead-c">${fN(b.novos)} novos na base</div>`:""}</td>
+    <td>${esc(localB(b))}</td><td class="muted">${TAM[b.parametros.tamanho][0]}</td><td class="muted sm">${fData(b.criado_em)}</td>
+    <td style="min-width:170px"><span class="pill e-${b.estado}">${ESTADO[b.estado]}${b.posicao_fila>1?" · "+b.posicao_fila+"º":""}</span>${b.estado==="rodando"?`<div style="margin-top:6px">${barraB(b)}</div>`:""}${b.estado==="erro"?`<div class="xs" style="color:var(--err);margin-top:3px;max-width:240px">${esc(b.etapa)}</div>`:""}</td>
+    <td class="num" style="text-align:right;font-weight:600">${b.estado==="concluida"?fN(b.total):b.parcial?`<span class="muted">${fN(b.parcial)}…</span>`:"—"}</td>
+    <td class="num" style="text-align:right">${b.estado==="concluida"?`${fN(b.com_whatsapp)} <span class="muted xs">${fPct(b.com_whatsapp,b.total)}</span>`:"—"}</td>
+    <td class="num" style="text-align:right">${b.estado==="concluida"?`${fN(b.com_email)} <span class="muted xs">${fPct(b.com_email,b.total)}</span>`:"—"}</td></tr>`).join("")}
+  </tbody></table></div>`}</div>`;
+  $$("tr[data-b]").forEach(tr => tr.onclick = () => location.hash = `#/buscas/${tr.dataset.b}`);
+}
+function viewBusca(id){
+  const b = S.buscas.find(x=>x.id===id);
+  if(!b){ crumbs([["Buscas","#/buscas"],["Não encontrada"]]); $("#page").innerHTML = `<div class="card"><div class="empty"><b>Busca não encontrada</b><a href="#/buscas">Voltar para buscas</a></div></div>`; return; }
+  crumbs([["Buscas","#/buscas"],[b.parametros.nichos.join(", ")]]);
+  const rodando = b.estado==="rodando"||b.estado==="na_fila";
+  const mesma = viewBusca.ult===id+b.estado && $("#tbl");  // só atualiza o progresso, sem recriar a tabela
+  viewBusca.ult = id+b.estado;
+  const progresso = rodando?`<div class="card" style="margin-bottom:16px" id="prog"><div class="card-b"><div class="row" style="margin-bottom:10px;flex-wrap:wrap"><b>${b.estado==="na_fila"?"Aguardando na fila":"Em andamento"}</b><span class="muted sm">${esc(b.etapa)}</span>${b.parcial?`<span class="sm" style="margin-left:auto"><b class="num">${fN(b.parcial)}</b> empresas encontradas até agora</span>`:""}</div>${barraB(b)}
+      <div class="hint" style="margin-top:10px">Pode sair desta tela: a busca continua rodando e os leads aparecem sozinhos quando terminar.</div></div></div>`:"";
+  if(mesma && rodando && $("#prog")){ $("#prog").outerHTML = progresso; return; }
+  $("#page").innerHTML = `<div class="ph fade"><div><div class="row" style="margin-bottom:6px"><span class="pill e-${b.estado}">${ESTADO[b.estado]}</span><span class="muted sm">${TAM[b.parametros.tamanho][0]} · ${fData(b.criado_em)}</span></div><h1>${esc(b.parametros.nichos.join(", "))}</h1><p class="row">${ic("pin")} ${esc(localB(b))}</p></div>
+    <div class="acts">${b.estado==="concluida"?`<button class="btn" id="bExpB">${ic("down")}Exportar</button>`:""}${rodando?`<button class="btn" id="bCanc">${ic("x")}Cancelar</button>`:`<button class="btn" id="bRep">${ic("refresh")}Rodar de novo</button>`}<button class="btn danger" id="bDel">${ic("trash")}Excluir</button></div></div>
+    ${progresso}
+    ${b.estado==="erro"?`<div class="note err fade" style="margin-bottom:16px">${ic("flag")}<span><b>Deu erro:</b> ${esc(b.etapa)}</span></div>`:""}
+    ${(b.avisos||[]).map(a=>`<div class="note" style="margin-bottom:10px">${esc(a)}</div>`).join("")}
+    ${b.total?`<div class="grid g4 fade" style="margin-bottom:16px">
+      <div class="card kpi"><div class="l">Empresas</div><div class="n num">${fN(b.total)}</div><div class="s">${fN(b.novos??b.total)} novas na base</div></div>
+      <div class="card kpi"><div class="l">Com WhatsApp</div><div class="n num" style="color:var(--wa)">${fN(b.com_whatsapp)}</div><div class="s">${fPct(b.com_whatsapp,b.total)}</div></div>
+      <div class="card kpi"><div class="l">Com e-mail</div><div class="n num">${fN(b.com_email)}</div><div class="s">${fPct(b.com_email,b.total)}</div></div>
+      <div class="card kpi"><div class="l">Sem site</div><div class="n num" style="color:var(--warn)">${fN(b.sem_site)}</div><div class="s">oportunidade para quem vende site</div></div></div>
+      <div class="card fade" id="tbl"></div>`:""}`;
+  $("#bCanc") && ($("#bCanc").onclick = async()=>{ await api(`/api/buscas/${id}/cancelar`,{method:"POST"}); await carregaBuscas(); render(); });
+  $("#bRep") && ($("#bRep").onclick = async()=>{ if(!confirma("rep"+id,"Rodar esta busca de novo? Leads novos entram na base; status e anotações dos atuais são mantidos.")) return; await api(`/api/buscas/${id}/repetir`,{method:"POST"}); await carregaBuscas(); render(); });
+  $("#bDel").onclick = async()=>{ if(!confirma("del"+id,"Excluir esta busca? Leads que você já trabalhou (status ou anotação) continuam na base.")) return; await api(`/api/buscas/${id}`,{method:"DELETE"}); await Promise.all([carregaBuscas(),carregaLeads()]); toast("Busca excluída"); location.hash="#/buscas"; };
+  if($("#tbl")) api(`/api/buscas/${id}`).then(d => { const ids=new Set(d.lead_ids); const fonte = () => S.leads.filter(l=>ids.has(l.id));
+    $("#bExpB") && ($("#bExpB").onclick = () => exportaCsv(fonte(), semAc(b.parametros.nichos[0]).replace(/\W+/g,"-")+"_"+semAc(b.parametros.cidade).replace(/\W+/g,"-")));
+    tabelaLeads($("#tbl"), fonte, "b_"+id); });
+}
+
+// ═════════════ LEADS (tabela reutilizável) ═════════════
+const FL = ls.get("fl", {texto:"", wa:false, email:false, semsite:false, nota4:false, status:"", cidade:"", categoria:"", ocultarFechados:true, ocultarDescartados:false});
+const TB = {ordem:{c:"nota",d:-1}, pag:0, sel:new Set()};
+const POR_PAG = 50;
+VIEWS.leads = () => {
+  crumbs([["Prospecção","#/buscas"],["Leads"]]);
+  $("#page").innerHTML = `<div class="ph fade"><div><h1>Leads</h1><p>Todas as empresas encontradas, sem repetição. Clique em uma para abrir a ficha.</p></div>
+    <div class="acts"><button class="btn" id="bCopia">${ic("copy")}Copiar WhatsApps</button><button class="btn" id="bExp">${ic("down")}Exportar para Excel</button></div></div>
+    <div class="card fade" id="tbl"></div>`;
+  tabelaLeads($("#tbl"), () => S.leads, "todos", true);
+};
+function filtra(rows){
+  const q = semAc(FL.texto);
+  return rows.filter(l => (!q || semAc(`${l.nome} ${l.categoria} ${l.bairro} ${l.cidade} ${l.obs} ${l.telefone}`).includes(q)) &&
+    (!FL.wa||l.whatsapp) && (!FL.email||l.email) && (!FL.semsite||!l.site) && (!FL.nota4||l.nota>=4) &&
+    (!FL.status||l.status===FL.status) && (!FL.cidade||l.cidade===FL.cidade) && (!FL.categoria||l.categoria===FL.categoria) &&
+    (!FL.ocultarFechados||!l.fechado) && (!FL.ocultarDescartados||l.status!=="descartado"));
+}
+function ordena(rows){ const {c,d} = TB.ordem;
+  return [...rows].sort((a,b)=>{ let x=a[c], y=b[c];
+    if(c==="contato"){ x=(!!a.whatsapp)*2+(!!a.email); y=(!!b.whatsapp)*2+(!!b.email); }
+    if(c==="status"){ x=STATUS.findIndex(s=>s[0]===a.status); y=STATUS.findIndex(s=>s[0]===b.status); }
+    if(c==="nota"&&x===y){ x=a.avaliacoes; y=b.avaliacoes; }
+    return d*(typeof x==="number"||typeof y==="number" ? (x||0)-(y||0) : String(x||"").localeCompare(String(y||""),"pt-BR")); }); }
+function tabelaLeads(el, fonte, chave, comAcoesTopo){
+  if(TB.chave!==chave){ TB.chave=chave; TB.pag=0; TB.sel.clear(); }
+  const opts = campo => [...new Set(fonte().map(l=>l[campo]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+  const draw = () => {
+    const todos = fonte(), rows = ordena(filtra(todos)), pags = Math.max(1,Math.ceil(rows.length/POR_PAG));
+    if(TB.pag>=pags) TB.pag = pags-1;
+    const vis = rows.slice(TB.pag*POR_PAG, TB.pag*POR_PAG+POR_PAG);
+    const th = (c,t) => `<th data-o="${c}">${t}${TB.ordem.c===c?(TB.ordem.d>0?" ↑":" ↓"):""}</th>`;
+    const todosSel = vis.length && vis.every(l=>TB.sel.has(l.id));
+    el.innerHTML = `
+      <div class="tbar">
+        <input class="in" type="search" id="fq" placeholder="Filtrar por nome, bairro, telefone…" value="${esc(FL.texto)}">
+        <select class="in" id="fst"><option value="">Todos os status</option>${STATUS.map(([v,n])=>`<option value="${v}" ${FL.status===v?"selected":""}>${n}</option>`).join("")}</select>
+        <select class="in" id="fcid"><option value="">Todas as cidades</option>${opts("cidade").map(c=>`<option ${FL.cidade===c?"selected":""}>${esc(c)}</option>`).join("")}</select>
+        <select class="in" id="fcat"><option value="">Todas as categorias</option>${opts("categoria").map(c=>`<option ${FL.categoria===c?"selected":""}>${esc(c)}</option>`).join("")}</select>
+        <span class="chip ${FL.wa?"on":""}" data-f="wa">${ic("wa")}WhatsApp</span>
+        <span class="chip ${FL.email?"on":""}" data-f="email">${ic("mail")}E-mail</span>
+        <span class="chip ${FL.semsite?"on":""}" data-f="semsite" title="Ótimo para quem vende site, tráfego ou marketing">Sem site</span>
+        <span class="chip ${FL.nota4?"on":""}" data-f="nota4">★ 4+</span>
+        <span class="chip ${FL.ocultarDescartados?"on":""}" data-f="ocultarDescartados">Ocultar descartados</span>
+      </div>
+      ${TB.sel.size?`<div class="bulk">${fN(TB.sel.size)} selecionado${TB.sel.size>1?"s":""}
+        <select class="in" id="bulkSt" style="padding:5px 26px 5px 10px"><option value="">Mudar status para…</option>${STATUS.map(([v,n])=>`<option value="${v}">${n}</option>`).join("")}</select>
+        <button class="btn sm" id="bulkExp">${ic("down")}Exportar seleção</button><button class="btn sm ghost" id="bulkClr">Limpar seleção</button></div>`:""}
+      <div class="twrap"><table class="t"><thead><tr><th class="chk"><input type="checkbox" id="selAll" ${todosSel?"checked":""}></th>
+        ${th("nome","Empresa")}${th("bairro","Local")}${th("telefone","Telefone")}${th("contato","Canais")}${th("nota","Nota")}${th("status","Status")}${th("atualizado_em","Atualizado")}</tr></thead>
+      <tbody>${vis.map(l=>`<tr data-id="${esc(l.id)}" class="${TB.sel.has(l.id)?"sel":""}">
+        <td class="chk"><input type="checkbox" data-sel="${esc(l.id)}" ${TB.sel.has(l.id)?"checked":""}></td>
+        <td><div class="lead-n">${esc(l.nome)}</div><div class="lead-c">${esc(l.categoria)}${l.fechado?' · <b style="color:var(--err)">fechado</b>':""}</div></td>
+        <td><div class="sm">${esc(l.bairro||"—")}</div><div class="lead-c">${esc([l.cidade,l.uf].filter(Boolean).join(" - "))}</div></td>
+        <td class="num sm" style="white-space:nowrap">${esc(l.telefone||"—")}</td>
+        <td><div class="ok-ico"><span class="wa ${l.whatsapp?"on":""}" title="WhatsApp">${ic("wa")}</span><span class="em ${l.email?"on":""}" title="E-mail">${ic("mail")}</span><span class="ws ${l.site?"on":""}" title="Site">${ic("globe")}</span><span class="ig ${l.instagram?"on":""}" title="Instagram">${ic("ig")}</span></div></td>
+        <td class="num" style="white-space:nowrap">${l.nota?`<span class="stars">★</span> ${fNota(l.nota)} <span class="muted xs">(${fN(l.avaliacoes)})</span>`:'<span class="muted">—</span>'}</td>
+        <td>${pillSt(l.status)}</td>
+        <td class="muted xs" style="white-space:nowrap">${fRel(l.atualizado_em)}</td></tr>`).join("")}</tbody></table>
+      ${!rows.length?`<div class="empty"><div class="ic">${ic("search")}</div><b>${todos.length?"Nenhum lead com esses filtros":"Nenhum lead ainda"}</b>${todos.length?"Tente tirar algum filtro.":`<a href="#/nova">Faça uma busca</a> para começar.`}</div>`:""}</div>
+      ${rows.length?`<div class="pag"><span>${fN(TB.pag*POR_PAG+1)}–${fN(TB.pag*POR_PAG+vis.length)} de ${fN(rows.length)} leads${rows.length!==todos.length?` (filtrados de ${fN(todos.length)})`:""}</span>
+        ${pags>1?`<span class="row"><button class="btn sm" id="pA" ${TB.pag?"":"disabled"}>← Anterior</button><span>Página ${TB.pag+1} de ${pags}</span><button class="btn sm" id="pP" ${TB.pag<pags-1?"":"disabled"}>Próxima →</button></span>`:""}</div>`:""}`;
+    const salva = () => { ls.set("fl",FL); TB.pag=0; draw(); };
+    $("#fq",el).oninput = e => { FL.texto=e.target.value; ls.set("fl",FL); TB.pag=0; clearTimeout(draw.t); draw.t=setTimeout(()=>{ const pos=e.target.selectionStart; draw(); const f=$("#fq",el); f.focus(); f.setSelectionRange(pos,pos); },200); };
+    $("#fst",el).onchange = e => { FL.status=e.target.value; salva(); };
+    $("#fcid",el).onchange = e => { FL.cidade=e.target.value; salva(); };
+    $("#fcat",el).onchange = e => { FL.categoria=e.target.value; salva(); };
+    $$("[data-f]",el).forEach(c => c.onclick = () => { FL[c.dataset.f]=!FL[c.dataset.f]; salva(); });
+    $$("th[data-o]",el).forEach(t => t.onclick = () => { const c=t.dataset.o; TB.ordem = {c, d: TB.ordem.c===c ? -TB.ordem.d : (["nota","atualizado_em","contato"].includes(c)?-1:1)}; draw(); });
+    $("#selAll",el).onchange = e => { vis.forEach(l=> e.target.checked ? TB.sel.add(l.id) : TB.sel.delete(l.id)); draw(); };
+    $$("tbody tr",el).forEach(tr => tr.onclick = e => {
+      if(e.target.matches("input[type=checkbox]")){ const id=e.target.dataset.sel; e.target.checked?TB.sel.add(id):TB.sel.delete(id); draw(); return; }
+      if(e.target.closest(".chk")) return;
+      abreLead(tr.dataset.id); });
+    $("#pA",el) && ($("#pA",el).onclick = () => { TB.pag--; draw(); });
+    $("#pP",el) && ($("#pP",el).onclick = () => { TB.pag++; draw(); });
+    $("#bulkClr",el) && ($("#bulkClr",el).onclick = () => { TB.sel.clear(); draw(); });
+    $("#bulkExp",el) && ($("#bulkExp",el).onclick = () => exportaCsv(ordena(fonte()).filter(l=>TB.sel.has(l.id)), "selecao"));
+    $("#bulkSt",el) && ($("#bulkSt",el).onchange = async e => { const st=e.target.value; if(!st) return;
+      const r = await api("/api/leads/lote",{method:"POST",body:{ids:[...TB.sel],status:st}}); await carregaLeads(); TB.sel.clear(); toast(`${fN(r.alterados)} leads → ${NOME_ST[st]}`); draw(); });
+    if(comAcoesTopo){
+      $("#bExp").onclick = () => exportaCsv(rows, "leads");
+      $("#bCopia").onclick = () => copiaWhats(rows);
+    }
+  };
+  el._draw = draw; draw();
+}
+
+// ═════════════ FICHA DO LEAD (gaveta lateral) ═════════════
+let leadAberto = null;
+async function abreLead(id){
+  let l; try{ l = await api(`/api/leads/${encodeURIComponent(id)}`); }catch{ return toast("Lead não encontrado"); }
+  leadAberto = l; desenhaLead(); $("#drawer").classList.add("on"); $("#ov").classList.add("on");
+}
+VIEWS.lead = id => { history.replaceState(null, "", "#/leads"); render(); abreLead(decodeURIComponent(id)); };
+function fechaLead(){ $("#drawer").classList.remove("on"); $("#ov").classList.remove("on"); leadAberto=null;
+  const t=$("#tbl"); if(t&&t._draw) t._draw(); if(rota().v==="funil"&&VIEWS.funil._draw) VIEWS.funil._draw(); }
+$("#ov").onclick = fechaLead;
+document.addEventListener("keydown", e => { if(e.key==="Escape" && leadAberto) fechaLead(); });
+function desenhaLead(){
+  const l = leadAberto, tpls = S.config?.templates||[], tplSel = ls.get("tplSel", S.config?.padrao);
+  const icEv = {whatsapp:"wa",status:"flag",nota:"note",ligacao:"phone",email:"mail",criado:"spark"};
+  const origemWa = {site:"encontrado no site da empresa", maps:"informado no Google Maps", telefone:"o telefone é celular"}[l.whatsapp_origem]||"";
+  const num = l.whatsapp || (l.tel_tipo==="fixo" ? l.tel_digitos : "");
+  $("#drawer").innerHTML = `
+    <button class="btn ghost sm dr-x" id="drX" aria-label="Fechar">${ic("x")}</button>
+    <div class="dr-h">
+      <div class="row" style="margin-bottom:8px">${pillSt(l.status)}${l.fechado?'<span class="pill s-descartado nodot">Fechado permanentemente</span>':""}</div>
+      <h2>${esc(l.nome)}</h2>
+      <div class="muted sm" style="margin-top:4px">${esc(l.categoria)}${l.nota?` · <span class="stars">★</span> ${fNota(l.nota)} (${fN(l.avaliacoes)} avaliações)`:""}</div>
+    </div>
+    <div class="dr-b">
+      ${num?`<div class="row" style="gap:8px;margin-bottom:6px">
+          ${tpls.length?`<select class="in" id="tplSel" style="flex:1;min-width:0">${tpls.map(t=>`<option value="${esc(t.id)}" ${t.id===tplSel?"selected":""}>${esc(t.nome)}</option>`).join("")}</select>`:""}
+          <a class="btn wa" id="drWa" href="#" target="_blank" rel="noopener">${ic("wa")}${l.whatsapp?"Chamar no WhatsApp":"Tentar WhatsApp"}</a></div>
+        <div class="hint" style="margin:0 0 14px">${l.whatsapp?`${fTel(l.whatsapp)} · ${origemWa}`:"Telefone fixo: muitas empresas usam WhatsApp Business no fixo."}</div>`:""}
+      <div class="acts-grid">
+        ${l.tel_digitos?`<a class="btn" href="tel:+${esc(l.tel_digitos)}" data-ev="ligacao">${ic("phone")}Ligar</a>`:`<button class="btn" disabled>${ic("phone")}Ligar</button>`}
+        ${l.email?`<a class="btn" href="mailto:${esc(l.email.split(",")[0].trim())}" data-ev="email">${ic("mail")}E-mail</a>`:`<button class="btn" disabled>${ic("mail")}E-mail</button>`}
+        ${l.maps?`<a class="btn" href="${esc(l.maps)}" target="_blank" rel="noopener">${ic("pin")}Maps</a>`:`<button class="btn" disabled>${ic("pin")}Maps</button>`}
+      </div>
+      <div class="sec-t">Etapa do funil</div>
+      <div class="stsel" id="stsel">${STATUS.map(([v,n])=>`<button data-st="${v}" class="${l.status===v?"on s-"+v:""}">${n}</button>`).join("")}</div>
+      <div class="sec-t">Dados</div>
+      <dl class="info">
+        <dt>Telefone</dt><dd class="num">${esc(l.telefone||"—")} ${l.tel_tipo?`<span class="pill nodot">${l.tel_tipo}</span>`:""}</dd>
+        ${l.whatsapp&&l.whatsapp!==l.tel_digitos?`<dt>WhatsApp</dt><dd class="num">${fTel(l.whatsapp)}</dd>`:""}
+        <dt>E-mail</dt><dd>${l.email?esc(l.email):'<span class="muted">não encontrado</span>'}</dd>
+        <dt>Site</dt><dd>${l.site?`<a href="${esc(l.site)}" target="_blank" rel="noopener">${esc(dominio(l.site))}</a>`:'<span style="color:var(--warn);font-weight:600">Não tem site</span>'}</dd>
+        ${l.instagram?`<dt>Instagram</dt><dd><a href="${esc(l.instagram)}" target="_blank" rel="noopener">${esc(l.instagram.replace(/^https?:\/\/(www\.)?instagram\.com\//,"@").replace(/\/$/,""))}</a></dd>`:""}
+        ${l.facebook?`<dt>Facebook</dt><dd><a href="${esc(l.facebook)}" target="_blank" rel="noopener">${esc(l.facebook.replace(/^https?:\/\/(www\.|m\.)?facebook\.com\//,""))}</a></dd>`:""}
+        ${l.linkedin?`<dt>LinkedIn</dt><dd><a href="${esc(l.linkedin)}" target="_blank" rel="noopener">abrir perfil</a></dd>`:""}
+        <dt>Endereço</dt><dd>${esc(l.endereco||"—")}</dd>
+        <dt>Bairro</dt><dd>${esc(l.bairro||"—")}</dd>
+        <dt>Cidade</dt><dd>${esc([l.cidade,l.uf].filter(Boolean).join(" - ")||"—")}${l.cep?` · CEP ${esc(l.cep)}`:""}</dd>
+        <dt>Origem</dt><dd>${(l.buscas||[]).map(bid=>{ const b=S.buscas.find(x=>x.id===bid); return b?`<a href="#/buscas/${bid}">${esc(b.parametros.nichos.join(", "))}</a>`:""; }).filter(Boolean).join(", ")||esc(l.nicho||"—")}</dd>
+      </dl>
+      <div class="sec-t">Anotações e histórico</div>
+      <textarea class="in" id="nota" rows="2" placeholder="Ex.: falei com a recepcionista, retornar na segunda…"></textarea>
+      <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn sm pri" id="bNota">${ic("note")}Adicionar anotação</button></div>
+      <div class="tl" style="margin-top:14px">${[...(l.historico||[])].reverse().map(e=>`<div class="tl-i"><div class="tl-d">${ic(icEv[e.tipo]||"note")}</div><div><div class="tl-t">${esc(e.tipo==="whatsapp"?"Chamado no WhatsApp":e.tipo==="ligacao"?"Ligação":e.tipo==="email"?"E-mail enviado":e.txt)}</div><div class="tl-m">${fData(e.t)}</div></div></div>`).join("")}</div>
+    </div>`;
+  $("#drX").onclick = fechaLead;
+  const wa = $("#drWa");
+  if(wa){
+    const atual = () => tpls.find(t=>t.id===($("#tplSel")?.value||tplSel)) || tpls[0];
+    const href = () => `https://wa.me/${num}?text=${encodeURIComponent(preencheTpl(atual()?.texto||"", l))}`;
+    wa.href = href();
+    $("#tplSel") && ($("#tplSel").onchange = e => { ls.set("tplSel", e.target.value); wa.href = href(); });
+    wa.onclick = () => { wa.href = href(); registraEv("whatsapp"); };
+  }
+  $$("[data-ev]", $("#drawer")).forEach(a => a.addEventListener("click", () => registraEv(a.dataset.ev)));
+  $("#stsel").onclick = async e => { const st=e.target.dataset.st; if(!st||st===l.status) return;
+    leadAberto = await api(`/api/leads/${encodeURIComponent(l.id)}`,{method:"PATCH",body:{status:st}}); upsertLead(leadAberto); desenhaLead(); toast(`→ ${NOME_ST[st]}`); };
+  $("#bNota").onclick = async () => { const t=$("#nota").value.trim(); if(!t) return;
+    leadAberto = await api(`/api/leads/${encodeURIComponent(l.id)}/evento`,{method:"POST",body:{tipo:"nota",txt:t}}); upsertLead(leadAberto); desenhaLead(); toast("Anotação salva"); };
+}
+async function registraEv(tipo){
+  const l = leadAberto; if(!l) return;
+  try{ const novo = await api(`/api/leads/${encodeURIComponent(l.id)}/evento`,{method:"POST",body:{tipo}}); upsertLead(novo);
+    if(leadAberto && leadAberto.id===novo.id){ leadAberto = novo; setTimeout(desenhaLead, 300); } }catch{}
+}
+function preencheTpl(t, l){ return String(t||"").replace(/\{nome\}/g, l.nome||"").replace(/\{cidade\}/g, l.cidade||"")
+  .replace(/\{bairro\}/g, l.bairro||"").replace(/\{categoria\}/g, (l.categoria||"").toLowerCase()); }
+
+// ═════════════ FUNIL (quadro) ═════════════
+const FK = ls.get("fk", {busca:"", wa:false, texto:""});
+VIEWS.funil = () => {
+  crumbs([["Prospecção","#/buscas"],["Funil de vendas"]]);
+  $("#page").innerHTML = `<div class="ph fade"><div><h1>Funil de vendas</h1><p>Arraste os cartões entre as colunas para mudar a etapa. Clique para abrir a ficha.</p></div></div>
+    <div class="row fade" style="flex-wrap:wrap;margin-bottom:14px">
+      <input class="in" type="search" id="kq" placeholder="Filtrar…" style="max-width:240px" value="${esc(FK.texto)}">
+      <select class="in" id="kb"><option value="">Todas as buscas</option>${S.buscas.filter(b=>b.estado==="concluida").map(b=>`<option value="${b.id}" ${FK.busca===b.id?"selected":""}>${esc(b.parametros.nichos.join(", "))} · ${esc(b.parametros.cidade)}</option>`).join("")}</select>
+      <span class="chip ${FK.wa?"on":""}" id="kwa">${ic("wa")}Só com WhatsApp</span>
+    </div><div class="kb fade" id="kbd"></div>`;
+  const draw = () => {
+    if(!$("#kbd")) return;
+    const q = semAc(FK.texto);
+    const rows = S.leads.filter(l => (!FK.busca || (l.buscas||[]).includes(FK.busca)) && (!FK.wa||l.whatsapp) && (!q || semAc(l.nome+" "+l.bairro+" "+l.categoria).includes(q)));
+    $("#kbd").innerHTML = STATUS.map(([st,n]) => {
+      // "Novo": os mais promissores primeiro (nota ponderada pelo nº de avaliações); demais: mais recentes primeiro
+      const col = rows.filter(l=>l.status===st).sort((a,b)=> st==="novo" ? (b.nota*Math.log10(b.avaliacoes+1))-(a.nota*Math.log10(a.avaliacoes+1)) : (b.atualizado_em||0)-(a.atualizado_em||0));
+      const lim = st==="novo"||st==="descartado" ? 40 : 200;
+      return `<div class="kcol" data-st="${st}"><div class="kcol-h"><span class="dot" style="background:${COR_ST[st]};box-shadow:none"></span>${n}<span class="c num">${fN(col.length)}</span></div>
+        <div class="kcol-b">${col.slice(0,lim).map(l=>`<div class="kc" draggable="true" data-id="${esc(l.id)}"><div class="n">${esc(l.nome)}</div><div class="m">${esc(l.categoria)}${l.bairro?" · "+esc(l.bairro):""}</div>
+          <div class="f"><div class="ok-ico"><span class="wa ${l.whatsapp?"on":""}">${ic("wa")}</span><span class="em ${l.email?"on":""}">${ic("mail")}</span><span class="ws ${l.site?"on":""}">${ic("globe")}</span></div>${l.nota?`<span class="xs" style="margin-left:auto"><span class="stars">★</span> ${fNota(l.nota)}</span>`:""}</div></div>`).join("")}
+          ${col.length>lim?`<div class="kmore">+ ${fN(col.length-lim)} — use os filtros ou a tela de Leads</div>`:""}
+          ${!col.length?`<div class="kmore">Arraste para cá</div>`:""}</div></div>`; }).join("");
+    let arrastando = null;
+    $$(".kc").forEach(c => { c.ondragstart = e => { arrastando=c.dataset.id; c.classList.add("drag"); e.dataTransfer.effectAllowed="move"; };
+      c.ondragend = () => c.classList.remove("drag"); c.onclick = () => abreLead(c.dataset.id); });
+    $$(".kcol").forEach(col => {
+      col.ondragover = e => { e.preventDefault(); col.classList.add("drop"); };
+      col.ondragleave = e => { if(!col.contains(e.relatedTarget)) col.classList.remove("drop"); };
+      col.ondrop = async e => { e.preventDefault(); col.classList.remove("drop"); const st=col.dataset.st, l=S.map[arrastando]; if(!l||l.status===st) return;
+        l.status=st; l.atualizado_em=Date.now()/1000; draw();
+        try{ upsertLead(await api(`/api/leads/${encodeURIComponent(l.id)}`,{method:"PATCH",body:{status:st}})); toast(`${l.nome} → ${NOME_ST[st]}`); }catch(err){ toast(err.message); } };
+    });
+  };
+  $("#kq").oninput = e => { FK.texto=e.target.value; ls.set("fk",FK); draw(); };
+  $("#kb").onchange = e => { FK.busca=e.target.value; ls.set("fk",FK); draw(); };
+  $("#kwa").onclick = e => { FK.wa=!FK.wa; ls.set("fk",FK); e.currentTarget.classList.toggle("on",FK.wa); draw(); };
+  VIEWS.funil._draw = draw;
+  draw();
+};
+
+// ═════════════ MENSAGENS ═════════════
+let tplEd = null;
+VIEWS.mensagens = async () => {
+  crumbs([["Ajustes"],["Mensagens"]]);
+  if(!S.config) try{ S.config = await api("/api/config"); }catch{ return; }
+  const C = JSON.parse(JSON.stringify(S.config));
+  if(!tplEd || !C.templates.find(t=>t.id===tplEd)) tplEd = C.templates[0]?.id;
+  const ex = S.leads.find(l=>l.whatsapp) || {nome:"Clínica Sorriso", cidade:"Florianópolis", bairro:"Centro", categoria:"Dentista"};
+  const draw = () => {
+    const t = C.templates.find(x=>x.id===tplEd);
+    $("#page").innerHTML = `<div class="ph"><div><h1>Mensagens</h1><p>Modelos prontos para o WhatsApp. Na ficha do lead, você escolhe qual usar e a mensagem já vai escrita.</p></div>
+      <div class="acts"><button class="btn" id="tNovo">${ic("plus")}Novo modelo</button><button class="btn pri" id="tSalva">${ic("check")}Salvar alterações</button></div></div>
+      <div class="grid" style="grid-template-columns:${innerWidth<800?"1fr":"minmax(0,300px) minmax(0,1fr)"};align-items:start">
+        <div class="card tpl-list" style="overflow:hidden">${C.templates.map(x=>`<div class="it ${x.id===tplEd?"on":""}" data-t="${esc(x.id)}"><div class="row"><b>${esc(x.nome)}</b>${C.padrao===x.id?'<span class="pill s-fechado nodot" style="margin-left:auto">padrão</span>':""}</div><p>${esc(x.texto)}</p></div>`).join("")}</div>
+        ${t?`<div class="card"><div class="card-b" style="padding:20px 22px">
+          <label class="lbl" style="margin-top:0">Nome do modelo</label><input class="in" id="tNome" value="${esc(t.nome)}">
+          <label class="lbl">Mensagem</label><textarea class="in" id="tTxt" rows="6">${esc(t.texto)}</textarea>
+          <div class="chips" style="margin-top:8px">${["nome","cidade","bairro","categoria"].map(v=>`<span class="chip" data-var="${v}">+ {${v}}</span>`).join("")}</div>
+          <div class="hint">Clique numa variável para inserir. Ela é trocada pelos dados de cada empresa.</div>
+          <label class="lbl">Prévia (com ${esc(ex.nome)})</label>
+          <div class="wa-prev"><div class="bubble" id="tPrev"></div></div>
+          <div class="sep"></div>
+          <div class="row" style="flex-wrap:wrap;gap:14px">
+            <label class="switch"><input type="checkbox" id="tPad" ${C.padrao===t.id?"checked":""}> Usar como padrão</label>
+            <button class="btn sm danger" id="tDel" style="margin-left:auto" ${C.templates.length<2?"disabled":""}>${ic("trash")}Excluir modelo</button>
+          </div>
+        </div></div>`:""}
+      </div>
+      <div class="card" style="margin-top:16px"><div class="card-b"><label class="switch"><input type="checkbox" id="tAuto" ${C.auto_contatado?"checked":""}> Quando eu clicar em WhatsApp, Ligar ou E-mail, mover o lead de “Novo” para “Contatado” automaticamente</label></div></div>`;
+    const prev = () => { $("#tPrev") && ($("#tPrev").innerHTML = esc(preencheTpl($("#tTxt").value, ex)) + `<small>${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} ✓✓</small>`); };
+    prev();
+    $$(".tpl-list .it").forEach(it => it.onclick = () => { tplEd = it.dataset.t; draw(); });
+    if(t){
+      $("#tNome").oninput = e => t.nome = e.target.value;
+      $("#tTxt").oninput = e => { t.texto = e.target.value; prev(); };
+      $$("[data-var]").forEach(c => c.onclick = () => { const ta=$("#tTxt"), s=ta.selectionStart, v=`{${c.dataset.var}}`; ta.value=ta.value.slice(0,s)+v+ta.value.slice(ta.selectionEnd); t.texto=ta.value; ta.focus(); ta.setSelectionRange(s+v.length,s+v.length); prev(); });
+      $("#tPad").onchange = e => { if(e.target.checked) C.padrao=t.id; };
+      $("#tDel").onclick = () => { if(!confirma("tdel"+t.id,"Excluir este modelo?")) return; C.templates = C.templates.filter(x=>x.id!==t.id); if(C.padrao===t.id) C.padrao=C.templates[0].id; tplEd=C.templates[0].id; draw(); };
+    }
+    $("#tAuto").onchange = e => C.auto_contatado = e.target.checked;
+    $("#tNovo").onclick = () => { const id = Math.random().toString(36).slice(2,10); C.templates.push({id, nome:"Novo modelo", texto:"Olá! Vi a {nome} no Google Maps…"}); tplEd=id; draw(); $("#tNome").select(); };
+    $("#tSalva").onclick = async () => { try{ S.config = await api("/api/config",{method:"PUT",body:C}); toast("Mensagens salvas"); }catch(err){ toast(err.message); } };
+  };
+  draw();
+};
+
+// ═════════════ CONFIGURAÇÕES ═════════════
+VIEWS.config = async () => {
+  crumbs([["Ajustes"],["Configurações"]]);
+  let st = {motor:false}; try{ st = await api("/api/status"); }catch{}
+  if(rota().v!=="config") return;
+  $("#page").innerHTML = `<div class="ph fade"><div><h1>Configurações</h1><p>Motor de busca, seus dados e backup.</p></div></div>
+  <div class="grid g2 fade">
+    <div class="card"><div class="card-h"><h3>Motor de busca</h3></div><div class="card-b">
+      <div class="row" style="margin-bottom:12px"><span class="dot ${st.motor?"ok":"off"}"></span><b>${st.motor?"Ligado e respondendo":"Desligado"}</b></div>
+      ${st.motor?`<p class="muted sm" style="margin:0">O motor roda no Docker, em <code>localhost:8080</code>, e só aceita conexões do seu computador.</p>`:
+      `<div class="note err">${ic("flag")}<span>Abra o <b>Docker Desktop</b> e dê dois cliques no <b>Prospeccao.command</b> (na pasta do projeto). Ou no terminal: <code>docker compose up -d</code></span></div>`}
+      <div class="sep"></div>
+      <div class="sm"><b>Para abrir o sistema no dia a dia:</b> dois cliques em <code>Prospeccao.command</code>, na pasta <code>google-maps-scraper-kit</code>. Ele liga o Docker, o motor e este painel.</div>
+    </div></div>
+    <div class="card"><div class="card-h"><h3>Seus dados</h3></div><div class="card-b">
+      <div class="grid g3" style="gap:10px;margin-bottom:14px">
+        <div><div class="xs muted">Leads</div><div style="font-size:20px;font-weight:700" class="num">${fN(S.leads.length)}</div></div>
+        <div><div class="xs muted">Buscas</div><div style="font-size:20px;font-weight:700" class="num">${fN(S.buscas.length)}</div></div>
+        <div><div class="xs muted">Trabalhados</div><div style="font-size:20px;font-weight:700" class="num">${fN(S.leads.filter(l=>l.status!=="novo").length)}</div></div>
+      </div>
+      <p class="muted sm" style="margin:0 0 12px">Tudo fica salvo só no seu computador, na pasta <code>painel/dados/</code>. Nada vai para a nuvem.</p>
+      <button class="btn" id="cExp">${ic("down")}Baixar base completa (Excel)</button>
+    </div></div>
+    <div class="card"><div class="card-h"><h3>Boas práticas</h3></div><div class="card-b sm">
+      <div class="steps">
+        <div class="step"><div><b>Não exagere nas buscas grandes</b><span class="muted">Muitas buscas “Cidade inteira” seguidas podem fazer o Google bloquear seu IP por algumas horas.</span></div></div>
+        <div class="step"><div><b>Personalize a abordagem</b><span class="muted">Mensagens com o nome da empresa e o bairro têm muito mais resposta do que texto genérico.</span></div></div>
+        <div class="step"><div><b>Respeite a LGPD</b><span class="muted">Use os dados só para contato comercial com empresas, marque como “Descartado” quem pedir para não ser contatado e não revenda a base.</span></div></div>
+      </div></div></div>
+    <div class="card"><div class="card-h"><h3>Sobre</h3></div><div class="card-b sm muted">
+      Painel feito sobre o <b style="color:var(--ink)">Google Maps Scraper Kit</b>, com o motor de código aberto <code>gosom/google-maps-scraper</code> (licença MIT). Lista de municípios com códigos e coordenadas do IBGE.
+    </div></div>
+  </div>`;
+  $("#cExp").onclick = () => exportaCsv(S.leads, "base-completa");
+};
+
+// ═════════════ exportação ═════════════
+function exportaCsv(rows, nome){
+  if(!rows.length) return toast("Nada para exportar.");
+  const cols = [["Empresa","nome"],["Categoria","categoria"],["Telefone","telefone"],["Tipo de telefone","tel_tipo"],
+    ["WhatsApp",l=>l.whatsapp?fTel(l.whatsapp):""],["Link WhatsApp",l=>l.whatsapp?`https://wa.me/${l.whatsapp}`:""],
+    ["E-mail","email"],["Site","site"],["Instagram","instagram"],["Facebook","facebook"],["LinkedIn","linkedin"],
+    ["Endereço","endereco"],["Bairro","bairro"],["Cidade","cidade"],["UF","uf"],["CEP","cep"],
+    ["Nota",l=>l.nota?String(l.nota).replace(".",","):""],["Avaliações","avaliacoes"],["Google Maps","maps"],
+    ["Status",l=>NOME_ST[l.status]||l.status],["Anotações","obs"]];
+  const cel = v => { v=String(v??""); return /[;"\n\r]/.test(v) ? `"${v.replace(/"/g,'""')}"` : v; };
+  // separador ; + BOM: abre certinho no Excel em português
+  const csv = "﻿" + [cols.map(c=>c[0]).join(";"), ...rows.map(l=>cols.map(([,k])=>cel(typeof k==="function"?k(l):l[k])).join(";"))].join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download = `prospecta_${nome}_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000); toast(`${fN(rows.length)} leads exportados`);
+}
+async function copiaWhats(rows){
+  const nums=[...new Set(rows.filter(l=>l.whatsapp).map(l=>l.whatsapp))];
+  try{ await navigator.clipboard.writeText(nums.join("\n")); toast(`${fN(nums.length)} números copiados`); }catch{ toast("Não consegui copiar"); }
+}
+
+// ═════════════ status + atualização automática ═════════════
+async function status(){
+  try{ const s=await api("/api/status");
+    $("#dot").className="dot "+(s.motor?"ok":"off");
+    $("#motorTxt").textContent = s.motor?"Motor ligado":"Motor desligado";
+    $("#motorSub").textContent = s.motor?"Roda 100% no seu computador":"Abra o Docker Desktop";
+  }catch{ $("#dot").className="dot off"; $("#motorTxt").textContent="Painel desconectado"; $("#motorSub").textContent="Reabra o Prospeccao.command"; }
+}
+async function tick(){
+  if(document.hidden) return;
+  const concluiu = await carregaBuscas();
+  if(concluiu){ await carregaLeads(); toast("Busca concluída! Leads novos na base."); }
+  renderNav();
+  if(leadAberto) return; // não mexe na tela com a ficha aberta
+  const {v, arg} = rota();
+  const ativa = S.buscas.some(b=>b.estado==="rodando"||b.estado==="na_fila");
+  if(v==="buscas" && (ativa || concluiu)) VIEWS.buscas(arg);
+  else if(v==="inicio" && (ativa || concluiu)) VIEWS.inicio();
+  else if(concluiu && (v==="leads" || v==="funil")) render();
+}
+(async () => {
+  await Promise.all([carregaBuscas(), carregaLeads(), status(), api("/api/config").then(c=>S.config=c).catch(()=>{})]);
+  render();
+  setInterval(tick, 3000);
+  setInterval(status, 15000);
+})();
+</script>
+</body>
+</html>

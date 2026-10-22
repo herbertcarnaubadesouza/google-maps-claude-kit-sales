@@ -16,3 +16,6 @@ __pycache__/
 # OS / editor noise
 .DS_Store
 Thumbs.db
+
+# Painel: buscas e leads salvos localmente (dados pessoais — nunca commitar)
+painel/dados/
